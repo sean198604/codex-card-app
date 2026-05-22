@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+
+# 运行时数据（由 Docker volume 管理，不提交）
+database/clients.db
+uploads/
+reports/
+out/
+
+# 环境变量
+.env
+
+# API 密钥（敏感，不提交）
+config/api_config.json
+
+# 保留示例配置
+!config/api_config.example.json
+!config/no-bg-logo-EGO.png
+
+# IDE
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+.workbuddy/

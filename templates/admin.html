@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>调研管理后台</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-h: #1d4ed8;
+      --bg: #f1f5f9;
+      --card-bg: #ffffff;
+      --text: #1e293b;
+      --text-sub: #64748b;
+      --border: #e2e8f0;
+      --ok: #10b981;
+      --warn: #f59e0b;
+      --run: #3b82f6;
+      --error: #ef4444;
+      --queued: #8b5cf6;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      background: var(--bg); color: var(--text);
+      min-height: 100vh; line-height: 1.5;
+    }
+
+    /* ===== 顶部 ===== */
+    .hero {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      padding: 1.1rem 1.5rem;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1rem; flex-wrap: wrap;
+      box-shadow: 0 2px 8px rgba(0,0,0,.25);
+      position: sticky; top: 0; z-index: 100;
+    }
+    .hero-left { display: flex; align-items: center; gap: 0.75rem; }
+    .hero-title { font-size: 1.15rem; font-weight: 700; color: #fff; }
+    .hero-sub   { font-size: 0.78rem; color: rgba(255,255,255,0.55); }
+    .btn-back { font-size: 0.8rem; color: rgba(255,255,255,0.7); text-decoration: none; border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; padding: 0.3rem 0.75rem; transition: background 0.15s; }
+    .btn-back:hover { background: rgba(255,255,255,0.1); }
+
+    /* ===== 登录蒙层 ===== */
+    #login-overlay {
+      position: fixed; inset: 0; z-index: 200;
+      background: rgba(15,23,42,0.85); backdrop-filter: blur(4px);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .login-box {
+      background: var(--card-bg); border-radius: 16px;
+      padding: 2rem 2.25rem; width: 320px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    .login-box h2 { font-size: 1.15rem; margin-bottom: 1.25rem; }
+    .login-box input {
+      width: 100%; padding: 0.65rem 0.85rem;
+      border: 1px solid var(--border); border-radius: 8px;
+      font-size: 0.95rem; outline: none; margin-bottom: 0.85rem;
+      transition: border-color .15s;
+    }
+    .login-box input:focus { border-color: var(--primary); }
+    .login-box button {
+      width: 100%; padding: 0.65rem;
+      background: var(--primary); color: #fff;
+      border: none; border-radius: 8px; font-size: 0.95rem;
+      font-weight: 600; cursor: pointer; transition: background .15s;
+    }
+    .login-box button:hover { background: var(--primary-h); }
+    .login-err { color: var(--error); font-size: 0.8rem; margin-top: 0.5rem; min-height: 1.2em; }
+
+    /* ===== 主体 ===== */
+    .container { max-width: 1400px; margin: 0 auto; padding: 1.25rem; }
+
+    /* ===== 工具栏 ===== */
+    .toolbar {
+      display: flex; align-items: center; gap: 0.75rem;
+      flex-wrap: wrap; margin-bottom: 1rem;
+    }
+    .toolbar-left { display: flex; align-items: center; gap: 0.75rem; flex: 1; flex-wrap: wrap; }
+    .search-box {
+      padding: 0.5rem 0.85rem; border: 1px solid var(--border);
+      border-radius: 8px; font-size: 0.85rem; outline: none;
+      width: 220px; transition: border-color .15s;
+    }
+    .search-box:focus { border-color: var(--primary); }
+
+    .filter-sel {
+      padding: 0.5rem 0.75rem; border: 1px solid var(--border);
+      border-radius: 8px; font-size: 0.85rem; background: #fff;
+      outline: none; cursor: pointer;
+    }
+
+    .stat-badge {
+      font-size: 0.78rem; color: var(--text-sub);
+      padding: 0.3rem 0.7rem; background: var(--bg);
+      border-radius: 20px; border: 1px solid var(--border);
+    }
+
+    .btn {
+      padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.85rem;
+      font-weight: 600; cursor: pointer; border: none; transition: background .15s, opacity .15s;
+    }
+    .btn:disabled { opacity: .45; cursor: not-allowed; }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:not(:disabled):hover { background: var(--primary-h); }
+    .btn-outline { background: #fff; color: var(--text); border: 1px solid var(--border); }
+    .btn-outline:hover { background: var(--bg); }
+    .btn-export { background: #059669; color: #fff; }
+    .btn-export:not(:disabled):hover { background: #047857; }
+
+    /* ===== 表格 ===== */
+    .table-wrap {
+      background: var(--card-bg); border-radius: 12px;
+      border: 1px solid var(--border);
+      overflow-x: auto;
+      box-shadow: 0 1px 3px rgba(0,0,0,.07);
+    }
+
+    table { width: 100%; border-collapse: collapse; min-width: 1100px; }
+    thead tr { background: #f8fafc; border-bottom: 1px solid var(--border); }
+    th {
+      padding: 0.7rem 0.85rem; text-align: left;
+      font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .06em; color: var(--text-sub); white-space: nowrap;
+      user-select: none; cursor: pointer;
+    }
+    th:hover { color: var(--primary); }
+    th.no-sort { cursor: default; }
+    th.sort-asc::after  { content: ' ↑'; color: var(--primary); }
+    th.sort-desc::after { content: ' ↓'; color: var(--primary); }
+
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background .1s;
+    }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: #f8fafc; }
+    tbody tr.selected { background: #eff6ff; }
+
+    td { padding: 0.7rem 0.85rem; font-size: 0.82rem; vertical-align: middle; }
+
+    /* 复选框列 */
+    .col-check { width: 36px; }
+
+    /* 状态徽章 */
+    .badge {
+      display: inline-flex; align-items: center; gap: 0.3rem;
+      font-size: 0.7rem; font-weight: 700; padding: 0.2rem 0.6rem;
+      border-radius: 20px; white-space: nowrap;
+    }
+    .badge-completed { background: #d1fae5; color: #065f46; }
+    .badge-running   { background: #dbeafe; color: #1e40af; }
+    .badge-queued    { background: #ede9fe; color: #5b21b6; }
+    .badge-failed    { background: #fee2e2; color: #991b1b; }
+    .badge-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+    .badge-running .badge-dot { animation: pulse 1.2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+    /* 评分 */
+    .score { font-weight: 700; }
+    .score-high { color: var(--ok); }
+    .score-mid  { color: var(--warn); }
+    .score-low  { color: var(--error); }
+
+    /* 报告链接 */
+    .report-link { color: var(--primary); font-size: 0.78rem; text-decoration: none; }
+    .report-link:hover { text-decoration: underline; }
+
+    /* 展开行 */
+    .expand-btn {
+      background: none; border: none; cursor: pointer;
+      color: var(--text-sub); font-size: 0.9rem; padding: 0.1rem 0.3rem;
+      border-radius: 4px; transition: color .15s;
+    }
+    .expand-btn:hover { color: var(--primary); }
+
+    .detail-row { display: none; }
+    .detail-row.open { display: table-row; }
+    .detail-cell {
+      background: #f8fafc; padding: 1rem 1.25rem;
+      border-top: 1px solid var(--border);
+    }
+    .detail-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 0.75rem; margin-bottom: 1rem;
+    }
+    .detail-item label { font-size: 0.68rem; color: var(--text-sub); text-transform: uppercase; letter-spacing: .06em; display: block; margin-bottom: 0.15rem; }
+    .detail-item span  { font-size: 0.83rem; color: var(--text); }
+
+    .report-md {
+      background: #fff; border: 1px solid var(--border); border-radius: 8px;
+      padding: 1.25rem 1.5rem; font-size: 0.875rem; max-height: 500px; overflow-y: auto;
+      color: var(--text); line-height: 1.75;
+    }
+    /* Markdown 美化 */
+    .md-prose h1,.md-prose h2,.md-prose h3,.md-prose h4 { font-weight:700; color:#0f172a; margin:1em 0 .4em; }
+    .md-prose h1 { font-size:1.2rem; border-bottom:2px solid #e2e8f0; padding-bottom:.3rem; }
+    .md-prose h2 { font-size:1.05rem; border-bottom:1px solid #e2e8f0; padding-bottom:.2rem; }
+    .md-prose h3 { font-size:0.95rem; }
+    .md-prose p  { margin:.45em 0; }
+    .md-prose ul,.md-prose ol { padding-left:1.4em; margin:.4em 0; }
+    .md-prose li { margin-bottom:.2em; }
+    .md-prose strong { color:#1e293b; font-weight:700; }
+    .md-prose em { color:#475569; }
+    .md-prose code { background:#f1f5f9; border-radius:4px; padding:.1em .35em; font-family:monospace; font-size:.82em; color:#be185d; }
+    .md-prose pre { background:#0f172a; border-radius:8px; padding:1rem; overflow-x:auto; margin:.6em 0; }
+    .md-prose pre code { background:none; color:#e2e8f0; padding:0; }
+    .md-prose blockquote { border-left:3px solid #2563eb; padding:.2rem .75rem; margin:.5rem 0; background:#eff6ff; border-radius:0 6px 6px 0; color:#334155; }
+    .md-prose table { border-collapse:collapse; width:100%; margin:.5rem 0; font-size:.82rem; }
+    .md-prose th { background:#f8fafc; font-weight:600; text-align:left; }
+    .md-prose th,.md-prose td { border:1px solid #e2e8f0; padding:.3rem .55rem; }
+    .md-prose hr { border:none; border-top:1px solid #e2e8f0; margin:1em 0; }
+    .md-prose a { color:#2563eb; text-decoration:underline; }
+    /* 删除按钮 */
+    .btn-del { background:none; border:1px solid #fca5a5; color:#ef4444; border-radius:5px; cursor:pointer;
+      font-size:0.72rem; padding:.18rem .45rem; margin-left:4px; line-height:1.4;
+      transition:background .15s,color .15s; }
+    .btn-del:hover { background:#fee2e2; color:#b91c1c; }
+
+    /* ===== 空状态 ===== */
+    .empty { text-align: center; padding: 3rem 1rem; color: var(--text-sub); }
+
+    /* ===== 页脚统计 ===== */
+    .footer-stat {
+      margin-top: 1rem; font-size: 0.78rem; color: var(--text-sub);
+      text-align: right;
+    }
+
+    /* ===== 响应式 ===== */
+    @media (max-width: 640px) {
+      .hero { padding: 0.9rem 1rem; }
+      .container { padding: 0.75rem; }
+      .toolbar { flex-direction: column; align-items: flex-start; }
+      .search-box { width: 100%; }
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js"></script>
+</head>
+<body>
+
+<!-- 登录蒙层 -->
+<div id="login-overlay">
+  <div class="login-box">
+    <h2>🔐 管理后台登录</h2>
+    <input type="password" id="pwd-input" placeholder="请输入管理员密码" autocomplete="current-password" />
+    <button id="pwd-btn">登 录</button>
+    <div class="login-err" id="login-err"></div>
+  </div>
+</div>
+
+<!-- 顶部 -->
+<div class="hero">
+  <div class="hero-left">
+    <div>
+      <div class="hero-title">📊 客户调研管理后台</div>
+      <div class="hero-sub" id="hero-sub">加载中…</div>
+    </div>
+  </div>
+  <a href="/" class="btn-back">← 返回主页</a>
+</div>
+
+<div class="container">
+
+  <!-- 工具栏 -->
+  <div class="toolbar">
+    <div class="toolbar-left">
+      <input class="search-box" id="search-input" type="text" placeholder="搜索公司名…" />
+      <select class="filter-sel" id="status-filter">
+        <option value="">全部状态</option>
+        <option value="completed">✅ 已完成</option>
+        <option value="running">🔵 进行中</option>
+        <option value="queued">🟣 排队中</option>
+        <option value="failed">🔴 失败</option>
+      </select>
+      <span class="stat-badge" id="sel-badge">已选 0 条</span>
+    </div>
+    <button class="btn btn-outline" id="select-all-btn">全选当页</button>
+    <button class="btn btn-outline" id="deselect-btn">取消选择</button>
+    <button class="btn btn-export" id="export-btn" disabled>⬇ 导出选中</button>
+    <button class="btn btn-primary" id="export-all-btn">⬇ 导出全部</button>
+  </div>
+
+  <!-- 表格 -->
+  <div class="table-wrap">
+    <table id="main-table">
+      <thead>
+        <tr>
+          <th class="col-check no-sort"><input type="checkbox" id="header-check" /></th>
+          <th data-col="client_id">ID</th>
+          <th data-col="created_at">时间</th>
+          <th data-col="company">公司名</th>
+          <th data-col="country">国家</th>
+          <th data-col="company_size">规模</th>
+          <th data-col="company_reputation_score">口碑</th>
+          <th data-col="purchasing_power_score">采购力</th>
+          <th data-col="payment_risk_score">付款风险</th>
+          <th data-col="market_coverage_score">市场覆盖</th>
+          <th data-col="communication_convenience_score">沟通便利</th>
+          <th data-col="status">状态</th>
+          <th class="no-sort">报告 / 详情</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+    <div class="empty" id="empty-tip" style="display:none">暂无数据</div>
+  </div>
+  <div class="footer-stat" id="footer-stat"></div>
+</div>
+
+<script>
+  /* ── 全局变量 ── */
+  let adminPassword = '';
+  let allData = [];
+  let filteredData = [];
+  let sortCol = 'client_id';
+  let sortDir = 'desc';
+  let selected = new Set();
+
+  /* ── 登录 ── */
+  const loginOverlay = document.getElementById('login-overlay');
+  const pwdInput     = document.getElementById('pwd-input');
+  const pwdBtn       = document.getElementById('pwd-btn');
+  const loginErr     = document.getElementById('login-err');
+
+  async function doLogin() {
+    const pw = pwdInput.value.trim();
+    if (!pw) return;
+    pwdBtn.disabled = true;
+    try {
+      const r = await fetch('/api/admin/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: pw }),
+      });
+      if (r.ok) {
+        adminPassword = pw;
+        loginOverlay.style.display = 'none';
+        loadData();
+      } else {
+        loginErr.textContent = '密码错误，请重试';
+      }
+    } catch {
+      loginErr.textContent = '网络错误，请刷新重试';
+    } finally {
+      pwdBtn.disabled = false;
+    }
+  }
+  pwdBtn.addEventListener('click', doLogin);
+  pwdInput.addEventListener('keydown', e => e.key === 'Enter' && doLogin());
+
+  /* ── 数据加载 ── */
+  async function loadData() {
+    try {
+      const r = await fetch('/researches?limit=500');
+      const d = await r.json();
+      allData = d.items || [];
+      document.getElementById('hero-sub').textContent =
+        `共 ${allData.length} 条调研记录`;
+      applyFilterSort();
+    } catch(e) {
+      document.getElementById('hero-sub').textContent = '加载失败';
+    }
+  }
+
+  /* ── 过滤 + 排序 ── */
+  function applyFilterSort() {
+    const keyword = document.getElementById('search-input').value.trim().toLowerCase();
+    const statusF = document.getElementById('status-filter').value;
+
+    filteredData = allData.filter(r => {
+      if (statusF && r.status !== statusF) return false;
+      if (keyword && !(r.company || '').toLowerCase().includes(keyword) &&
+          !(r.country || '').toLowerCase().includes(keyword)) return false;
+      return true;
+    });
+
+    // sort
+    filteredData.sort((a, b) => {
+      let av = a[sortCol], bv = b[sortCol];
+      if (av == null) av = sortDir === 'asc' ? Infinity : -Infinity;
+      if (bv == null) bv = sortDir === 'asc' ? Infinity : -Infinity;
+      if (typeof av === 'string') av = av.toLowerCase();
+      if (typeof bv === 'string') bv = bv.toLowerCase();
+      if (av < bv) return sortDir === 'asc' ? -1 : 1;
+      if (av > bv) return sortDir === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    renderTable();
+    updateSelBadge();
+  }
+
+  /* ── 渲染 ── */
+  function statusBadge(s) {
+    const map = {
+      completed: ['badge-completed', '✅ 已完成'],
+      running:   ['badge-running',   '🔵 进行中'],
+      queued:    ['badge-queued',     '🟣 排队中'],
+      failed:    ['badge-failed',     '🔴 失败'],
+    };
+    const [cls, txt] = map[s] || ['badge-queued', s];
+    return `<span class="badge ${cls}"><span class="badge-dot"></span>${txt}</span>`;
+  }
+
+  function scoreHtml(v) {
+    if (v == null || v === '') return '<span style="color:var(--text-sub)">—</span>';
+    const n = parseFloat(v);
+    const cls = n >= 7 ? 'score-high' : n >= 4 ? 'score-mid' : 'score-low';
+    return `<span class="score ${cls}">${n.toFixed(1)}</span>`;
+  }
+
+  function escHtml(s) {
+    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function renderTable() {
+    const tbody = document.getElementById('tbody');
+    tbody.innerHTML = '';
+
+    const empty = document.getElementById('empty-tip');
+    if (!filteredData.length) { empty.style.display = 'block'; document.getElementById('footer-stat').textContent = ''; return; }
+    empty.style.display = 'none';
+
+    filteredData.forEach(r => {
+      const cid = String(r.client_id);
+      const chk = selected.has(cid);
+
+      // 主行
+      const tr = document.createElement('tr');
+      tr.dataset.cid = cid;
+      if (chk) tr.classList.add('selected');
+
+      const dateStr = (r.updated_at || '').replace('T', ' ').slice(0, 16);
+      const companySize = r.company_size ? (r.company_size.length > 30 ? r.company_size.slice(0,30)+'…' : r.company_size) : '—';
+
+      tr.innerHTML = `
+        <td class="col-check"><input type="checkbox" class="row-check" data-cid="${cid}" ${chk?'checked':''}></td>
+        <td style="color:var(--text-sub);font-size:0.75rem">#${r.client_id}</td>
+        <td style="white-space:nowrap;color:var(--text-sub);font-size:0.75rem">${dateStr}</td>
+        <td style="font-weight:600">${escHtml(r.company)}</td>
+        <td>${escHtml(r.country || '—')}</td>
+        <td style="font-size:0.75rem;max-width:180px" title="${escHtml(r.company_size||'')}">
+          ${escHtml(companySize)}
+        </td>
+        <td>${scoreHtml(r.company_reputation_score)}</td>
+        <td>${scoreHtml(r.purchasing_power_score)}</td>
+        <td>${scoreHtml(r.payment_risk_score)}</td>
+        <td>${scoreHtml(r.market_coverage_score)}</td>
+        <td>${scoreHtml(r.communication_convenience_score)}</td>
+        <td>${statusBadge(r.status)}</td>
+        <td>
+          ${r.research_report_file
+            ? `<a class="report-link" href="/researches/${r.client_id}/markdown" target="_blank">查看报告</a>`
+            : '<span style="color:var(--text-sub);font-size:0.75rem">暂无</span>'}
+          &nbsp;
+          <button class="expand-btn" data-cid="${cid}" title="展开详情">▶</button>
+          &nbsp;
+          <button class="btn-del" onclick="deleteRecord(${r.client_id}, this)" title="删除此记录">🗑</button>
+        </td>`;
+      tbody.appendChild(tr);
+
+      // 详情行
+      const dtr = document.createElement('tr');
+      dtr.className = 'detail-row';
+      dtr.id = `detail-${cid}`;
+      dtr.innerHTML = `<td colspan="13" class="detail-cell" id="detail-cell-${cid}">
+        <div class="detail-grid">
+          <div class="detail-item"><label>产品类别</label><span>${escHtml(r.product_categories||'—')}</span></div>
+          <div class="detail-item"><label>目标市场</label><span>${escHtml(r.target_markets||'—')}</span></div>
+          <div class="detail-item"><label>最终客户</label><span>${escHtml(r.end_customers||'—')}</span></div>
+          <div class="detail-item"><label>错误信息</label><span style="color:var(--error)">${escHtml(r.error_message||'无')}</span></div>
+          <div class="detail-item"><label>来源</label><span style="font-size:0.72rem">${escHtml(r.sources||'—')}</span></div>
+        </div>
+        ${r.research_report_file
+          ? `<button class="btn btn-outline" style="font-size:0.78rem;padding:.35rem .75rem;margin-bottom:.75rem" onclick="loadMarkdown(${r.client_id}, this)">📄 展开调研报告</button>
+             <div id="md-${r.client_id}" style="display:none"></div>`
+          : ''}
+      </td>`;
+      tbody.appendChild(dtr);
+    });
+
+    // 复选框事件
+    tbody.querySelectorAll('.row-check').forEach(cb => {
+      cb.addEventListener('change', e => {
+        const cid = e.target.dataset.cid;
+        if (e.target.checked) selected.add(cid);
+        else selected.delete(cid);
+        e.target.closest('tr').classList.toggle('selected', e.target.checked);
+        updateSelBadge();
+        document.getElementById('header-check').checked = false;
+      });
+    });
+
+    // 展开按钮
+    tbody.querySelectorAll('.expand-btn').forEach(btn => {
+      btn.addEventListener('click', e => {
+        const cid = e.target.dataset.cid;
+        const dRow = document.getElementById('detail-' + cid);
+        const open = dRow.classList.toggle('open');
+        e.target.textContent = open ? '▼' : '▶';
+      });
+    });
+
+    document.getElementById('footer-stat').textContent =
+      `显示 ${filteredData.length} 条 / 共 ${allData.length} 条`;
+
+    // 更新表头排序指示
+    document.querySelectorAll('thead th[data-col]').forEach(th => {
+      th.classList.remove('sort-asc', 'sort-desc');
+      if (th.dataset.col === sortCol) th.classList.add(sortDir === 'asc' ? 'sort-asc' : 'sort-desc');
+    });
+  }
+
+  /* ── 加载 Markdown 报告 ── */
+  async function loadMarkdown(clientId, btn) {
+    btn.disabled = true;
+    btn.textContent = '加载中…';
+    try {
+      const r = await fetch(`/researches/${clientId}/markdown`);
+      const d = await r.json();
+      const container = document.getElementById('md-' + clientId);
+      container.style.display = 'block';
+      const mdText = d.markdown || d.content || '无内容';
+      const rendered = (typeof marked !== 'undefined') ? marked.parse(mdText) : '<pre>' + escHtml(mdText) + '</pre>';
+      container.innerHTML = `<div class="report-md"><div class="md-prose">${rendered}</div></div>`;
+      btn.style.display = 'none';
+    } catch {
+      btn.textContent = '📄 展开调研报告（加载失败）';
+      btn.disabled = false;
+    }
+  }
+  window.loadMarkdown = loadMarkdown;
+
+  /* ── 删除记录 ── */
+  async function deleteRecord(clientId, btn) {
+    if (!confirm('确定要删除此调研记录吗？此操作不可撤销。')) return;
+    btn.disabled = true;
+    btn.textContent = '…';
+    try {
+      const r = await fetch(`/api/admin/delete/${clientId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: adminPassword })
+      });
+      const d = await r.json();
+      if (!r.ok || !d.ok) throw new Error(d.detail || '删除失败');
+      const row = document.querySelector(`tr td input[data-cid="${clientId}"]`)?.closest('tr');
+      const detailRow = document.getElementById('detail-' + clientId);
+      if (row) row.remove();
+      if (detailRow) detailRow.remove();
+      allData = allData.filter(x => String(x.client_id) !== String(clientId));
+      document.getElementById('footer-stat').textContent =
+        `显示 ${allData.length} 条 / 共 ${allData.length} 条`;
+    } catch(e) {
+      alert('删除失败：' + e.message);
+      btn.disabled = false;
+      btn.textContent = '🗑';
+    }
+  }
+  window.deleteRecord = deleteRecord;
+
+  /* ── 选择操作 ── */
+  function updateSelBadge() {
+    document.getElementById('sel-badge').textContent = `已选 ${selected.size} 条`;
+    document.getElementById('export-btn').disabled = selected.size === 0;
+  }
+
+  document.getElementById('header-check').addEventListener('change', e => {
+    const checked = e.target.checked;
+    filteredData.forEach(r => {
+      const cid = String(r.client_id);
+      if (checked) selected.add(cid); else selected.delete(cid);
+    });
+    document.querySelectorAll('.row-check').forEach(cb => {
+      cb.checked = checked;
+      cb.closest('tr').classList.toggle('selected', checked);
+    });
+    updateSelBadge();
+  });
+
+  document.getElementById('select-all-btn').addEventListener('click', () => {
+    filteredData.forEach(r => selected.add(String(r.client_id)));
+    document.querySelectorAll('.row-check').forEach(cb => {
+      cb.checked = true; cb.closest('tr').classList.add('selected');
+    });
+    updateSelBadge();
+  });
+
+  document.getElementById('deselect-btn').addEventListener('click', () => {
+    selected.clear();
+    document.querySelectorAll('.row-check').forEach(cb => {
+      cb.checked = false; cb.closest('tr').classList.remove('selected');
+    });
+    document.getElementById('header-check').checked = false;
+    updateSelBadge();
+  });
+
+  /* ── 排序 ── */
+  document.querySelectorAll('thead th[data-col]').forEach(th => {
+    th.addEventListener('click', () => {
+      const col = th.dataset.col;
+      if (sortCol === col) sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+      else { sortCol = col; sortDir = 'desc'; }
+      applyFilterSort();
+    });
+  });
+
+  /* ── 搜索 / 过滤 ── */
+  document.getElementById('search-input').addEventListener('input', applyFilterSort);
+  document.getElementById('status-filter').addEventListener('change', applyFilterSort);
+
+  /* ── 导出 ── */
+  async function doExport(ids) {
+    const btn = ids ? document.getElementById('export-btn') : document.getElementById('export-all-btn');
+    btn.disabled = true;
+    const origText = btn.textContent;
+    btn.textContent = '导出中…';
+    try {
+      const body = { password: adminPassword, limit: 500 };
+      if (ids) body.ids = Array.from(ids).map(Number);
+      const r = await fetch('/api/admin/export', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!r.ok) throw new Error(await r.text());
+      const blob = await r.blob();
+      const cd = r.headers.get('Content-Disposition') || '';
+      const fnMatch = cd.match(/filename="([^"]+)"/);
+      const filename = fnMatch ? fnMatch[1] : 'research_export.csv';
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename; a.click();
+      URL.revokeObjectURL(url);
+    } catch(e) {
+      alert('导出失败：' + e.message);
+    } finally {
+      btn.disabled = ids ? selected.size === 0 : false;
+      btn.textContent = origText;
+    }
+  }
+
+  document.getElementById('export-btn').addEventListener('click', () => doExport(selected));
+  document.getElementById('export-all-btn').addEventListener('click', () => doExport(null));
+
+  /* ── 自动刷新（有任务在跑时，每 5s 刷新） ── */
+  async function autoRefresh() {
+    if (!adminPassword) return;
+    const hasActive = allData.some(r => r.status === 'running' || r.status === 'queued');
+    if (hasActive) await loadData();
+  }
+  setInterval(autoRefresh, 5000);
+</script>
+</body>
+</html>

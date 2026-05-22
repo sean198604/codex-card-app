@@ -1,0 +1,42 @@
+version: "3.9"
+
+services:
+  card-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: codex-card-app:latest
+    container_name: codex-card-app
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      # 持久化数据：数据库、上传图片、调研报告、CSV 导出
+      - card_database:/app/database
+      - card_uploads:/app/uploads
+      - card_reports:/app/reports
+      - card_out:/app/out
+      # API 配置（含 api_config.json）
+      - card_config:/app/config
+    environment:
+      - OCR_THREADS=10             # OCR 并发线程数
+      # ADMIN_PASSWORD 在 app.py 中硬编码为 1234，如需修改请直接改代码
+    networks:
+      - claw_default
+
+volumes:
+  card_database:
+    name: codex_card_database
+  card_uploads:
+    name: codex_card_uploads
+  card_reports:
+    name: codex_card_reports
+  card_out:
+    name: codex_card_out
+  card_config:
+    name: codex_card_config
+
+networks:
+  claw_default:
+    name: claw_default
+    external: true

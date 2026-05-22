@@ -1,0 +1,1013 @@
+﻿<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>名片识别与客户调研系统</title>
+  <style>
+    :root {
+      --primary-color: #2563eb;
+      --primary-hover: #1d4ed8;
+      --bg-color: #f1f5f9;
+      --card-bg: #ffffff;
+      --text-main: #1e293b;
+      --text-sub: #64748b;
+      --text-muted: #94a3b8;
+      --hero-bg-start: #0f172a;
+      --hero-bg-end: #1e293b;
+      --ok: #10b981;
+      --warn: #f59e0b;
+      --run: #2563eb;
+      --error: #ef4444;
+      --border-light: #e2e8f0;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: 'Inter', -apple-system, 'Microsoft YaHei', sans-serif;
+      background: var(--bg-color);
+      color: var(--text-main);
+      min-height: 100vh;
+      line-height: 1.5;
+      padding-top: 0;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 1rem;
+    }
+
+    /* ===== 顶部深色头部 ===== */
+    .hero-strip {
+      background: linear-gradient(135deg, var(--hero-bg-start) 0%, var(--hero-bg-end) 100%);
+      color: white;
+      border-radius: 12px;
+      padding: 1.25rem 1.5rem;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      overflow: hidden;
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+      flex: 1 1 75%;
+      margin-bottom: 0;
+      min-height: 80px;
+    }
+
+    .hero-strip::after {
+      content: 'CARD';
+      position: absolute;
+      right: 5%;
+      bottom: -10px;
+      font-size: 4rem;
+      font-weight: 900;
+      color: rgba(255, 255, 255, 0.08);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 2;
+    }
+
+    .hero-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+      color: white;
+      line-height: 1;
+    }
+
+    .hero-subtitle {
+      font-size: 0.875rem;
+      opacity: 0.7;
+      color: white;
+    }
+
+    /* ===== 顶部区域布局 ===== */
+    .hero-section {
+      display: flex;
+      width: 100%;
+      margin-bottom: 1rem;
+      align-items: stretch;
+      gap: 10px;
+    }
+
+    .logo-container {
+      flex: 0 0 25%;
+      background: transparent;
+      border-radius: 12px;
+      position: relative;
+      min-height: 80px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .logo {
+      height: 56px;
+      width: auto;
+      max-width: 90%;
+      object-fit: contain;
+    }
+
+    /* ===== 卡片通用样式 ===== */
+    .card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .card-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .card-desc {
+      font-size: 0.875rem;
+      color: var(--text-sub);
+      margin-bottom: 1rem;
+    }
+
+    /* ===== 按钮样式 ===== */
+    .btn-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .btn-primary {
+      background: var(--primary-color);
+      color: white;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: var(--primary-hover);
+    }
+
+    .btn-outline {
+      background: white;
+      color: var(--primary-color);
+      border: 1px solid var(--border-light);
+    }
+
+    .btn-outline:hover:not(:disabled) {
+      background: #f8fafc;
+      border-color: var(--primary-color);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-full {
+      width: 100%;
+    }
+
+    .btn-secondary {
+      background: #f8fafc;
+      color: var(--text-sub);
+      border: 1px solid var(--border-light);
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background: #f1f5f9;
+    }
+
+    /* ===== 预览区域 ===== */
+    .preview-box {
+      border: 2px dashed var(--border-light);
+      border-radius: 10px;
+      padding: 1.5rem;
+      text-align: center;
+      background: #fafbfc;
+      margin-bottom: 1rem;
+    }
+
+    .preview-title {
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: var(--text-main);
+    }
+
+    .preview-hint {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 0.25rem;
+    }
+
+    .preview-img {
+      margin-top: 1rem;
+      width: 100%;
+      max-height: 260px;
+      border-radius: 8px;
+      background: #f8fafc;
+      display: none;
+      object-fit: contain;
+      border: 1px solid var(--border-light);
+    }
+
+    /* ===== 状态提示 ===== */
+    .status-bar {
+      min-height: 24px;
+      font-size: 0.85rem;
+      color: var(--text-sub);
+      margin-bottom: 0.5rem;
+    }
+
+    .status-bar.success { color: var(--ok); }
+    .status-bar.warning { color: var(--warn); }
+    .status-bar.error { color: var(--error); }
+
+    .progress-bar {
+      height: 4px;
+      background: #e2e8f0;
+      border-radius: 999px;
+      overflow: hidden;
+      margin-bottom: 1rem;
+      display: none;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0;
+      background: linear-gradient(90deg, var(--primary-color), #60a5fa);
+      transition: width 0.2s ease;
+    }
+
+    /* ===== 结果网格 ===== */
+    .result-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    .result-item {
+      background: #f8fafc;
+      border: 1px solid var(--border-light);
+      border-radius: 8px;
+      padding: 0.75rem;
+    }
+
+    .result-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-bottom: 0.25rem;
+    }
+
+    .result-value {
+      font-size: 0.9rem;
+      color: var(--text-main);
+      word-break: break-word;
+    }
+
+    .result-extra {
+      font-size: 0.8rem;
+      color: var(--text-sub);
+      padding: 0.75rem;
+      background: #f8fafc;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+    }
+
+    /* ===== 输入框 ===== */
+    .input-group {
+      margin-bottom: 1rem;
+    }
+
+    .input-label {
+      display: block;
+      font-size: 0.85rem;
+      color: var(--text-sub);
+      margin-bottom: 0.5rem;
+    }
+
+    .input-field {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border: 1px solid var(--border-light);
+      border-radius: 8px;
+      font-size: 0.9rem;
+      color: var(--text-main);
+      background: white;
+      transition: border-color 0.15s ease;
+    }
+
+    .input-field:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    .input-field::placeholder {
+      color: var(--text-muted);
+    }
+
+    /* ===== 任务列表 ===== */
+    .task-section {
+      border: 1px solid var(--border-light);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .task-header {
+      padding: 1rem 1.25rem;
+      background: #f8fafc;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 600;
+      font-size: 1rem;
+    }
+
+    .task-header::after {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-right: 2px solid var(--text-muted);
+      border-bottom: 2px solid var(--text-muted);
+      transform: rotate(45deg);
+      transition: transform 0.15s ease;
+    }
+
+    .task-section.open .task-header::after {
+      transform: rotate(-135deg);
+    }
+
+    .task-content {
+      padding: 0 1.25rem 1.25rem;
+      display: none;
+    }
+
+    .task-section.open .task-content {
+      display: block;
+    }
+
+    .task-list {
+      display: grid;
+      gap: 0.75rem;
+    }
+
+    .task-item {
+      border: 1px solid var(--border-light);
+      border-radius: 8px;
+      padding: 0.875rem;
+      background: #fafbfc;
+    }
+
+    .task-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .task-name {
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    .task-meta {
+      font-size: 0.75rem;
+      color: var(--text-sub);
+      margin-top: 0.375rem;
+    }
+
+    .task-actions {
+      margin-top: 0.625rem;
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .task-btn {
+      border-radius: 6px;
+      padding: 0.375rem 0.75rem;
+      font-size: 0.75rem;
+      cursor: pointer;
+      border: 1px solid;
+    }
+
+    .task-btn-view {
+      background: #eff6ff;
+      color: var(--primary-color);
+      border-color: #bfdbfe;
+    }
+
+    .task-btn-view:hover {
+      background: #dbeafe;
+    }
+
+    .task-btn-del {
+      background: #fef2f2;
+      color: #dc2626;
+      border-color: #fecaca;
+    }
+
+    .task-btn-del:hover {
+      background: #fee2e2;
+    }
+
+    /* ===== 状态标签 ===== */
+    .pill {
+      font-size: 0.7rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 999px;
+      font-weight: 500;
+    }
+
+    .pill.queued {
+      color: var(--warn);
+      background: #fffbeb;
+      border: 1px solid #fcd34d;
+    }
+
+    .pill.running {
+      color: var(--run);
+      background: #eff6ff;
+      border: 1px solid #93c5fd;
+    }
+
+    .pill.completed {
+      color: var(--ok);
+      background: #ecfdf5;
+      border: 1px solid #6ee7b7;
+    }
+
+    .pill.failed {
+      color: var(--error);
+      background: #fef2f2;
+      border: 1px solid #fca5a5;
+    }
+
+    /* ===== 模态框 ===== */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+      z-index: 100;
+    }
+
+    .modal-panel {
+      width: 100%;
+      max-width: 600px;
+      max-height: 80vh;
+      background: white;
+      border-radius: 16px 16px 0 0;
+      padding: 1.25rem;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .modal-title {
+      font-weight: 600;
+      font-size: 1rem;
+    }
+
+    .modal-close {
+      border: 1px solid var(--border-light);
+      background: white;
+      border-radius: 6px;
+      padding: 0.375rem 0.75rem;
+      cursor: pointer;
+      font-size: 0.8rem;
+      color: var(--text-sub);
+    }
+
+    .modal-close:hover {
+      background: #f8fafc;
+    }
+
+    .modal-body {
+      border: 1px solid var(--border-light);
+      border-radius: 8px;
+      background: #fafbfc;
+      padding: 1rem;
+      overflow: auto;
+      flex: 1;
+      white-space: pre-wrap;
+      font-size: 0.85rem;
+      line-height: 1.6;
+      color: var(--text-main);
+    }
+
+    /* ===== 响应式 ===== */
+    @media (max-width: 768px) {
+      .container { padding: 0.75rem; }
+      .btn-row, .result-grid { grid-template-columns: 1fr; }
+      .hero-strip { padding: 1rem 1.25rem; }
+      .hero-title { font-size: 1.25rem; }
+      .hero-subtitle { font-size: 0.8rem; }
+      .logo { height: 40px; }
+      .card { padding: 1rem; }
+    }
+
+    @media (max-width: 520px) {
+      .container { padding: 0.75rem; }
+      .hero-strip { padding: 0.875rem 1rem; }
+      .hero-title { font-size: 1.1rem; }
+      .hero-subtitle { font-size: 0.75rem; }
+      .logo { height: 36px; }
+    }
+  
+    /* ===== 调研进度面板 ===== */
+    .research-progress-panel {
+      background: var(--card-bg);
+      border: 1px solid var(--border-light);
+      border-radius: 10px;
+      padding: 0.85rem 1rem;
+      margin-bottom: 0.75rem;
+    }
+    .research-progress-title {
+      font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.07em; color: var(--text-sub);
+      display: flex; align-items: center; gap: 0.4rem;
+      margin-bottom: 0.65rem;
+    }
+    .progress-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--run); animation: blink 1.2s infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.25} }
+
+    .progress-list { display: flex; flex-direction: column; gap: 0.45rem; }
+    .progress-item {
+      display: flex; align-items: center; gap: 0.55rem;
+      font-size: 0.8rem; padding: 0.4rem 0.6rem;
+      border-radius: 7px; background: #f8fafc;
+      border: 1px solid var(--border-light);
+    }
+    .pi-icon { font-size: 0.85rem; flex-shrink: 0; }
+    .pi-company { font-weight: 600; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .pi-status-badge {
+      font-size: 0.68rem; font-weight: 700; padding: 0.15rem 0.5rem;
+      border-radius: 12px; white-space: nowrap; flex-shrink: 0;
+    }
+    .pi-running  { background: #dbeafe; color: #1e40af; }
+    .pi-queued   { background: #ede9fe; color: #5b21b6; }
+    .pi-time     { font-size: 0.68rem; color: var(--text-sub); white-space: nowrap; flex-shrink: 0; }
+    .progress-empty { font-size: 0.78rem; color: var(--text-sub); text-align: center; padding: 0.25rem 0; }
+
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- 顶部深色头部 -->
+    <div class="hero-section">
+      <header class="hero-strip">
+        <div class="hero-content">
+          <h1 class="hero-title">名片识别与客户调研</h1>
+          <p class="hero-subtitle">智能OCR识别 + AI客户分析</p>
+        </div>
+      </header>
+      <div class="logo-container">
+        <img class="logo" src="/config-static/no-bg-logo-EGO.png" alt="EGO LOGO" />
+      </div>
+    </div>
+
+    <!-- 名片识别卡片 -->
+    <section class="card">
+      <div class="card-header">
+        <h2 class="card-title">名片识别</h2>
+      </div>
+      <p class="card-desc">上传名片图片或拍照，系统将自动进行OCR识别并提取关键信息。</p>
+
+      <div class="btn-row">
+        <button id="cameraBtn" class="btn btn-primary" type="button">拍摄名片</button>
+        <button id="albumBtn" class="btn btn-outline" type="button">上传名片</button>
+      </div>
+
+      <div class="preview-box">
+        <div class="preview-title">名片预览</div>
+        <div class="preview-hint">请拍摄或上传名片图片</div>
+        <img id="preview" class="preview-img" alt="名片预览" />
+      </div>
+
+      <input id="fileInput" type="file" accept="image/*" hidden />
+      <div id="status" class="status-bar">等待操作</div>
+      <div id="progress" class="progress-bar"><div id="bar" class="progress-fill"></div></div>
+
+      <button id="ocrBtn" class="btn btn-primary btn-full" type="button" disabled>上传识别</button>
+
+      <section id="resultCard" style="display:none;">
+        <div class="result-grid" id="fieldsGrid"></div>
+        <div id="extra" class="result-extra"></div>
+      </section>
+    </section>
+
+    <!-- 客户调研卡片 -->
+    <section class="card">
+      <div class="card-header">
+        <h2 class="card-title">客户调研</h2>
+      </div>
+      <p class="card-desc">输入客户名称后，系统将通过AI进行多维度背景调研分析。</p>
+
+      <div class="input-group">
+        <label class="input-label" for="companyInput">客户名称（可修改）</label>
+        <input id="companyInput" class="input-field" type="text" placeholder="请输入客户名称，可跳过识别直接填写" />
+      </div>
+
+    <div class="research-progress-panel" id="research-progress-panel" style="display:none">
+      <div class="research-progress-title">
+        <span class="progress-dot"></span>调研进行中
+        <span id="progress-count" style="color:var(--run);font-weight:700"></span>
+      </div>
+      <div class="progress-list" id="progress-list"></div>
+    </div>
+
+      <button id="researchBtn" class="btn btn-primary btn-full" type="button">客户调研</button>
+      <button id="clearLocalBtn" class="btn btn-secondary btn-full" type="button" style="margin-top:0.5rem;">清空当前输入</button>
+    </section>
+
+    <!-- 调研进度卡片 -->
+    <section class="card" style="padding:0;overflow:hidden;">
+      <div class="task-section" id="taskSection">
+        <div class="task-header" id="taskHeader">
+          <span>调研进度（点击展开）</span>
+        </div>
+        <div class="task-content">
+          <p class="card-desc" style="margin-bottom:0.75rem;margin-top:0;">删除按钮仅删除界面记录，不影响数据库和导出文件。</p>
+          <div id="taskList" class="task-list"></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- 模态框 -->
+  <div id="mdModal" class="modal-overlay">
+    <div class="modal-panel">
+      <div class="modal-header">
+        <strong id="mdTitle" class="modal-title">调研报告预览</strong>
+        <button id="closeMd" class="modal-close" type="button">关闭</button>
+      </div>
+      <div id="mdBody" class="modal-body"></div>
+    </div>
+  </div>
+
+  <script>
+    const fileInput = document.getElementById('fileInput');
+    const cameraBtn = document.getElementById('cameraBtn');
+    const albumBtn = document.getElementById('albumBtn');
+    const preview = document.getElementById('preview');
+    const ocrBtn = document.getElementById('ocrBtn');
+    const researchBtn = document.getElementById('researchBtn');
+    const clearLocalBtn = document.getElementById('clearLocalBtn');
+    const companyInput = document.getElementById('companyInput');
+    const statusEl = document.getElementById('status');
+    const progress = document.getElementById('progress');
+    const bar = document.getElementById('bar');
+    const resultCard = document.getElementById('resultCard');
+    const fieldsGrid = document.getElementById('fieldsGrid');
+    const extra = document.getElementById('extra');
+    const taskList = document.getElementById('taskList');
+    const taskSection = document.getElementById('taskSection');
+    const taskHeader = document.getElementById('taskHeader');
+    const mdModal = document.getElementById('mdModal');
+    const mdTitle = document.getElementById('mdTitle');
+    const mdBody = document.getElementById('mdBody');
+    const closeMd = document.getElementById('closeMd');
+
+    let currentClientId = null;
+    const taskMap = new Map();
+    const notifiedDone = new Set();
+
+    const hiddenTaskIds = new Set(JSON.parse(localStorage.getItem('hidden_task_ids') || '[]'));
+    const taskSeqMap = JSON.parse(localStorage.getItem('task_seq_map') || '{}');
+    let nextSeq = Number(localStorage.getItem('task_seq_next') || '1');
+
+    function persistSeq() {
+      localStorage.setItem('task_seq_map', JSON.stringify(taskSeqMap));
+      localStorage.setItem('task_seq_next', String(nextSeq));
+    }
+    function persistHidden() {
+      localStorage.setItem('hidden_task_ids', JSON.stringify([...hiddenTaskIds]));
+    }
+
+    function setStatus(text, cls = '') { 
+      statusEl.className = 'status-bar' + (cls ? ' ' + cls : ''); 
+      statusEl.textContent = text; 
+    }
+
+    function chooseMode(mode) {
+      if (mode === 'camera') fileInput.setAttribute('capture', 'environment');
+      else fileInput.removeAttribute('capture');
+      fileInput.click();
+    }
+    cameraBtn.addEventListener('click', () => chooseMode('camera'));
+    albumBtn.addEventListener('click', () => chooseMode('album'));
+
+    function statusText(st) {
+      if (st === 'queued') return '排队中';
+      if (st === 'running') return '调研中';
+      if (st === 'completed') return '已完成';
+      if (st === 'failed') return '失败';
+      if (st === 'skipped_no_api_key') return '未配置API';
+      if (st === 'not_requested') return '未发起';
+      return st || '-';
+    }
+
+    async function openMarkdown(clientId, company) {
+      try {
+        const r = await fetch(`/researches/${clientId}/markdown`, { cache: 'no-store' });
+        const d = await r.json();
+        if (!r.ok || !d.ok) {
+          mdTitle.textContent = `${company || '调研'} 报告预览`;
+          mdBody.textContent = d.detail || '报告暂不可用';
+        } else {
+          mdTitle.textContent = `${d.company || company || '调研'} 报告预览`;
+          mdBody.textContent = d.markdown || '暂无报告内容';
+        }
+      } catch {
+        mdTitle.textContent = `${company || '调研'} 报告预览`;
+        mdBody.textContent = '加载失败，请稍后重试';
+      }
+      mdModal.style.display = 'flex';
+    }
+    closeMd.addEventListener('click', () => { mdModal.style.display = 'none'; });
+    mdModal.addEventListener('click', (e) => { if (e.target === mdModal) mdModal.style.display = 'none'; });
+
+    function ensureSeq(clientId) {
+      const k = String(clientId);
+      if (!taskSeqMap[k]) {
+        taskSeqMap[k] = nextSeq;
+        nextSeq += 1;
+        persistSeq();
+      }
+      return taskSeqMap[k];
+    }
+
+    function renderTaskList() {
+      const arr = [...taskMap.values()]
+        .filter(x => !hiddenTaskIds.has(String(x.client_id)))
+        .sort((a,b)=>(b.updated_at||'').localeCompare(a.updated_at||''));
+
+      const totalCount = arr.length;
+      const displayArr = arr.slice(0, 5);  // 只显示最近 5 条
+      const hasMore = totalCount > 5;
+
+      if (!displayArr.length) {
+        taskList.innerHTML = '<p class="card-desc" style="margin:0;">暂无任务记录</p>';
+        return;
+      }
+
+      let html = displayArr.map(x => {
+        const company = x.company || `client-${x.client_id}`;
+        const cls = String(x.status || '').toLowerCase();
+        const seq = ensureSeq(x.client_id);
+        const report = x.research_report_file ? `<div class="task-meta">报告: ${x.research_report_file}</div>` : '';
+        const err = x.error_message ? `<div class="task-meta" style="color:var(--error);">错误: ${x.error_message}</div>` : '';
+        const viewBtn = x.status === 'completed' ? `<button class="task-btn task-btn-view" data-cid="${x.client_id}" data-company="${company}">查看报告</button>` : '';
+        const delBtn = `<button class="task-btn task-btn-del" data-del="${x.client_id}">删除记录</button>`;
+        return `<div class="task-item"><div class="task-top"><div class="task-name">#${seq} ${company}</div><div class="pill ${cls}">${statusText(x.status)}</div></div><div class="task-meta">ID: ${x.client_id || '-'} | 更新时间: ${x.updated_at || '-'}</div>${report}${err}<div class="task-actions">${viewBtn}${delBtn}</div></div>`;
+      }).join('');
+
+      if (hasMore) {
+        html += `<div class="task-more-hint">
+          <span>还有 ${totalCount - 5} 条历史记录</span>
+          <a href="/admin" target="_blank" class="task-admin-link">向管理员申请查看</a>
+        </div>`;
+      }
+      taskList.innerHTML = html;
+    }
+
+    taskList.addEventListener('click', (e) => {
+      const v = e.target.closest('.task-btn-view');
+      if (v) return openMarkdown(v.getAttribute('data-cid'), v.getAttribute('data-company'));
+      const d = e.target.closest('.task-btn-del');
+      if (!d) return;
+      hiddenTaskIds.add(String(d.getAttribute('data-del')));
+      persistHidden();
+      renderTaskList();
+    updateProgressPanel(data.items);
+    });
+
+    taskHeader.addEventListener('click', () => {
+      taskSection.classList.toggle('open');
+    });
+
+  
+  /* ── 调研进度面板（主页显示进行中任务）── */
+  function updateProgressPanel(items) {
+    const active = (items || []).filter(r => r.status === 'running' || r.status === 'queued');
+    const panel = document.getElementById('research-progress-panel');
+    const list  = document.getElementById('progress-list');
+    const cnt   = document.getElementById('progress-count');
+    if (!active.length) { panel.style.display = 'none'; return; }
+    panel.style.display = 'block';
+    cnt.textContent = '(' + active.length + ')';
+    list.innerHTML = active.map(r => {
+      const isRun = r.status === 'running';
+      const icon  = isRun ? '🔵' : '🟣';
+      const label = isRun ? '进行中' : '排队中';
+      const cls   = isRun ? 'pi-running' : 'pi-queued';
+      const t = (r.updated_at || '').replace('T',' ').slice(0,16);
+      return '<div class="progress-item">' +
+        '<span class="pi-icon">' + icon + '</span>' +
+        '<span class="pi-company">' + (r.company || '').replace(/</g,'&lt;') + '</span>' +
+        '<span class="pi-status-badge ' + cls + '">' + label + '</span>' +
+        '<span class="pi-time">' + t + '</span>' +
+      '</div>';
+    }).join('');
+  }
+
+  async function pollResearches() {
+      try {
+        const r = await fetch('/researches?limit=100', { cache: 'no-store' });
+        if (!r.ok) return;
+        const data = await r.json();
+        const items = Array.isArray(data.items) ? data.items : [];
+        for (const it of items) {
+          if (!it || typeof it.client_id === 'undefined') continue;
+          ensureSeq(it.client_id);
+          taskMap.set(String(it.client_id), it);
+          if (it.status === 'completed' && !notifiedDone.has(String(it.client_id))) {
+            notifiedDone.add(String(it.client_id));
+            setStatus(`公司名 ${it.company || ('ID ' + it.client_id)} 完成调研`, 'success');
+          }
+        }
+        renderTaskList();
+      } catch (_) {}
+    }
+
+    function renderFields(data) {
+      const fields = data.fields || {};
+      const rows = [
+        ['公司名', fields.company || '-'], 
+        ['联系人', fields.contact_name || '-'], 
+        ['邮箱', fields.email || '-'],
+        ['电话', fields.phone || '-'], 
+        ['网址', fields.website || '-']
+      ];
+      fieldsGrid.innerHTML = rows.map(([k,v]) => 
+        `<div class="result-item"><div class="result-label">${k}</div><div class="result-value">${String(v)}</div></div>`
+      ).join('');
+      extra.innerHTML = `OCR报告: ${data.report_file || '-'} | 调研状态: ${statusText(data.research_status)}`;
+      resultCard.style.display = 'block';
+    }
+
+    fileInput.addEventListener('change', () => {
+      const file = fileInput.files && fileInput.files[0];
+      if (!file) { ocrBtn.disabled = true; preview.style.display='none'; return; }
+      ocrBtn.disabled = false;
+      preview.src = URL.createObjectURL(file);
+      preview.style.display = 'block';
+      setStatus(`已选择: ${file.name}`);
+    });
+
+    async function uploadAndRecognize() {
+      const file = fileInput.files && fileInput.files[0];
+      if (!file) { setStatus('请先选择图片', 'warning'); return; }
+
+      const fd = new FormData(); fd.append('file', file);
+      ocrBtn.disabled = true;
+      progress.style.display='block'; bar.style.width='2%'; setStatus('上传识别中...');
+
+      const xhr = new XMLHttpRequest(); xhr.open('POST', '/upload', true);
+      xhr.upload.onprogress = (evt) => {
+        if (evt.lengthComputable) {
+          const pct = Math.max(2, Math.min(98, Math.round((evt.loaded / evt.total) * 100)));
+          bar.style.width = pct + '%';
+          setStatus(`上传识别中 ${pct}%`);
+        }
+      };
+      xhr.onload = () => {
+        ocrBtn.disabled = false;
+        try {
+          const data = JSON.parse(xhr.responseText || '{}');
+          if (xhr.status >= 200 && xhr.status < 300 && data.ok) {
+            currentClientId = data.client_id;
+            companyInput.value = (data.fields && data.fields.company) || '';
+            renderFields(data);
+            setStatus('识别完成。可修改客户名后点"客户调研"', 'success');
+            progress.style.display='none'; bar.style.width='0%';
+            if (data.client_id) {
+              ensureSeq(data.client_id);
+              taskMap.set(String(data.client_id), {
+                client_id: data.client_id,
+                company: companyInput.value,
+                status: 'not_requested',
+                updated_at: new Date().toISOString().slice(0,19).replace('T',' '),
+                research_report_file: '',
+                error_message: ''
+              });
+              renderTaskList();
+            }
+          } else {
+            setStatus(data.message || data.error || '识别失败', 'error');
+          }
+        } catch (err) {
+          setStatus('返回解析失败: ' + err, 'error');
+        }
+      };
+      xhr.onerror = () => { ocrBtn.disabled = false; setStatus('网络错误，请重试', 'error'); };
+      xhr.send(fd);
+    }
+
+    async function startResearch() {
+      const company = (companyInput.value || '').trim();
+      if (!company) return setStatus('请先输入客户名称', 'warning');
+
+      researchBtn.disabled = true;
+      try {
+        let clientId = currentClientId;
+        if (clientId) {
+          const p1 = await fetch(`/clients/${clientId}`, {
+            method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ company })
+          });
+          const d1 = await p1.json();
+          if (!p1.ok || !d1.ok) throw new Error(d1.detail || '更新客户名失败');
+
+          const p2 = await fetch(`/clients/${clientId}/research`, { method: 'POST' });
+          const d2 = await p2.json();
+          if (!p2.ok || !d2.ok) throw new Error(d2.detail || '发起调研失败');
+          setStatus(`已提交调研：${company}（${statusText(d2.research_status)}）`, 'success');
+          ensureSeq(clientId);
+          taskMap.set(String(clientId), {
+            client_id: clientId, company, status: d2.research_status,
+            updated_at: new Date().toISOString().slice(0,19).replace('T',' '), research_report_file: '', error_message: ''
+          });
+        } else {
+          const p = await fetch('/research/manual', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ company })
+          });
+          const d = await p.json();
+          if (!p.ok || !d.ok) throw new Error(d.detail || '创建调研失败');
+          clientId = d.client_id;
+          currentClientId = clientId;
+          setStatus(`已提交调研：${company}（${statusText(d.research_status)}）`, 'success');
+          ensureSeq(clientId);
+          taskMap.set(String(clientId), {
+            client_id: clientId, company, status: d.research_status,
+            updated_at: new Date().toISOString().slice(0,19).replace('T',' '), research_report_file: '', error_message: ''
+          });
+        }
+        renderTaskList();
+      } catch (e) {
+        setStatus('客户调研提交失败: ' + e.message, 'error');
+      } finally {
+        researchBtn.disabled = false;
+      }
+    }
+
+    clearLocalBtn.addEventListener('click', () => {
+      currentClientId = null;
+      companyInput.value = '';
+      preview.style.display = 'none';
+      fileInput.value = '';
+      ocrBtn.disabled = true;
+      resultCard.style.display = 'none';
+      setStatus('已清空当前输入');
+    });
+
+    ocrBtn.addEventListener('click', uploadAndRecognize);
+    researchBtn.addEventListener('click', startResearch);
+
+    pollResearches();
+    setInterval(pollResearches, 5000);
+  </script>
+</body>
+</html>
