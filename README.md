@@ -1,5 +1,3 @@
-<p align="center"><img src="assets/readme-cover.png" alt="Codex Card project cover" width="100%" /></p>
-
 # Codex Card — 名片识别与客户调研
 
 智能名片识别系统，OCR + AI 自动完成客户背景调研，生成结构化客户档案。
